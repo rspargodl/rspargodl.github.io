@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Deloitte Digital Perth - Business Chemistry</title>
+    <style>
+        svg {
+            display: block;
+            margin: 0
+        }
+        svg .axis {
+            stroke-width: 1px;
+            stroke: #8a8a8a
+        }
+        svg .grid {
+            stroke-width: 1px;
+            stroke: #CCC
+        }
+        svg .marker {
+            fill: #FFF;
+            stroke-width: 2px;
+            stroke: #242424
+        }
+        svg .marker-group:hover .marker {
+            fill: #000
+        }
+        svg .marker-group:hover .initials {
+            fill: #FFF
+        }
+        svg .marker-group .initials {
+            pointer-events: none;
+            font-size: 9px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        svg .marker.average {
+            stroke: #AAA;
+            fill: #AAA
+        }
+        svg .marker.average:hover {
+            stroke: #000;
+            fill: #000
+        }
+        svg .label {
+            font-size: 13px;
+            text-transform: uppercase;
+            font-weight: bold
+        }
+        svg .label-driver {
+            fill: #E91937
+        }
+        svg .label-pioneer {
+            fill: #dea00a
+        }
+        svg .label-integrator {
+            fill: #439544
+        }
+        svg .label-guardian {
+            fill: #0066A6
+        }
+        svg text.name {
+            font-size: 14px;
+            fill: #FFF
+        }
+        svg rect.name {
+            fill: #242424
+        }
+    </style>
+</head>
+<body>
+
+<div id="d3-graph"></div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Pioneer</th>
+            <th>Integrator</th>
+            <th>Driver</th>
+            <th>Guardian</th>
+            <th>Update</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Esteban Aguilar</td>
+            <td>14%</td>
+            <td>37%</td>
+            <td>13%</td>
+            <td>36%</td>
+            <td>04/03/2019</td>
+        </tr>
+        <tr>
+            <td>Graham Price</td>
+            <td>15%</td>
+            <td>46%</td>
+            <td>4%</td>
+            <td>35%</td>
+            <td>02/03/2022</td>
+        </tr>
+    </tbody>
+</table>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+<script>
+  var toNumber = function(s) {
+    return parseFloat(s.replace(/[^\d\.]/g, ''));
+  };
+
+  var rows = document.querySelectorAll('table tbody tr'),
+    data = [];
+
+  for (var i = 0, l = rows.length; i < l; i++) {
+    data.push({
+      name: rows[i].children[0].textContent,
+      pioneer: toNumber(rows[i].children[1].textContent),
+      integrator: toNumber(rows[i].children[2].textContent),
+      driver: toNumber(rows[i].children[3].textContent),
+      guardian: toNumber(rows[i].children[4].textContent)
+    });
+  }
+
+  var averageData = {
+    name: 'Average',
+    classes: 'average',
+    pioneer: 0,
+    integrator: 0,
+    driver: 0,
+    guardian: 0
+  };
+  for (var i = 0; i < data.length; i++) {
+    averageData.pioneer += data[i].pioneer;
+    averageData.integrator += data[i].integrator;
+    averageData.driver += data[i].driver;
+    averageData.guardian += data[i].guardian;
+  }
+  averageData.pioneer /= data.length;
+  averageData.integrator /= data.length;
+  averageData.driver /= data.length;
+  averageData.guardian /= data.length;
+  data.push(averageData);
+
+  var margin = {top: 30,right: 30,bottom: 30,left: 30},
+    width = 500,
+    height = 500,
+    innerWidth = (width - margin.left - margin.right),
+    innerHeight = (height - margin.top - margin.bottom);
+
+  var svg = d3.select('#d3-graph').append('svg')
+    .attr('width', width)
+    .attr('height', height);
+
+  var canvas = svg.append('g')
+    .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+  var axisLabelGroup = svg.append('g');
+
+  axisLabelGroup.append('text')
+    .attr('x', width / 2)
+    .attr('y', 20)
+    .attr('text-anchor', 'middle')
+    .attr('class', 'label label-driver')
+    .text('Driver');
+
+  axisLabelGroup.append('text')
+    .attr('x', width / 2)
+    .attr('y', height - 10)
+    .attr('text-anchor', 'middle')
+    .attr('class', 'label label-integrator')
+    .text('Integrator');
+
+  axisLabelGroup.append('g')
+    .attr('transform', 'translate(10, ' + (height / 2) + ') rotate(90)')
+    .append('text')
+    .attr('text-anchor', 'middle')
+    .attr('class', 'label label-pioneer')
+    .text('Pioneer');
+
+  axisLabelGroup.append('g')
+    .attr('transform', 'translate(' + (width - 20) + ', ' + (height / 2) + ') rotate(90)')
+    .append('text')
+    .attr('text-anchor', 'middle')
+    .attr('class', 'label label-guardian')
+    .text('Guardian');
+
+  var axisGroup,
+    yAxisLine,
+    xAxisLine;
+
+  axisGroup = canvas.append('g');
+
+  for (var steps = 5, i = 0; i < steps; i++) {
+    var dx = (i / (steps - 1)) * innerWidth;
+
+    axisGroup.append('line')
+      .attr('class', 'grid')
+      .attr('x1', dx)
+      .attr('y1', 0)
+      .attr('x2', dx)
+      .attr('y2', innerHeight);
+
+    axisGroup.append('line')
+      .attr('class', 'grid')
+      .attr('x1', 0)
+      .attr('y1', dx)
+      .attr('x2', innerHeight)
+      .attr('y2', dx);
+  }
+
+  yAxisLine = axisGroup.append('line')
+    .attr('class', 'axis')
+    .attr('x1', 0)
+    .attr('y1', innerWidth / 2)
+    .attr('x2', innerHeight)
+    .attr('y2', innerWidth / 2);
+
+  xAxisLine = axisGroup.append('line')
+    .attr('class', 'axis')
+    .attr('x1', innerWidth / 2)
+    .attr('y1', 0)
+    .attr('x2', innerWidth / 2)
+    .attr('y2', innerHeight);
+
+  var plotX = function(d) {
+    var p = ((0 - d.pioneer + d.guardian) / 50),
+      s = (innerWidth / 2);
+    return s + s * p;
+  };
+  var plotY = function(d) {
+    var p = ((0 - d.driver + d.integrator) / 50),
+      s = (innerHeight / 2);
+    return s + s * p;
+  };
+  var translate = function(d) {
+    var x = Number(plotX(d)).toFixed(2),
+      y = Number(plotY(d)).toFixed(2);
+
+    return 'translate(' + x + ',' + y + ')';
+  };
+  var getInitials = function (string) {
+    var names = string.trim().split(' '),
+      initials = names[0].substring(0, 1).toUpperCase();
+
+    if (names.length > 1) {
+      initials += names[names.length - 1].substring(0, 1).toUpperCase();
+    }
+
+    return initials;
+  };
+
+  dataGroup = canvas.append('g');
+  var markerRadius = 10;
+
+  var markers = dataGroup.selectAll('.marker-group')
+    .data(data)
+    .enter()
+    .append('g')
+    .attr('width', 10)
+    .attr('height', 10)
+    .attr('class', 'marker-group')
+    .attr('transform', translate)
+    .append('circle')
+    .attr('r', markerRadius)
+    .attr('class', function(d) {
+      return 'marker ' + (d.classes || '').trim();
+    })
+    .select(function() { return this.parentNode })
+    .append('text')
+    .attr('text-anchor', 'middle')
+    .attr('y', '3')
+    .attr('class', 'initials')
+    .text(function(d) {
+      if (d.classes === 'average') {
+        return '';
+      }
+
+      return getInitials(d.name);
+    });
+
+  var nameOverlayGroup,
+    hoverTextBackground,
+    hoverText;
+
+  nameOverlayGroup = canvas.append('g');
+  hoverTextBackground = nameOverlayGroup.append('rect')
+    .attr('x', 0)
+    .attr('y', 0)
+    .attr('class', 'name');
+  hoverText = nameOverlayGroup.append('text')
+    .attr('class', 'name')
+    .text('');
+
+  d3.selectAll('.marker-group').on('mouseover', function(d) {
+    var mx = parseInt(plotX(d), 10),
+      my = parseInt(plotY(d), 10),
+      offset;
+
+    hoverText.text(d.name);
+
+    var box = hoverText.node().getBBox(),
+      pad = 5,
+      x = (box.x - pad),
+      y = (box.y - pad),
+      width = (box.width + pad * 2),
+      height = (box.height + pad * 2);
+
+    hoverTextBackground.attr('x', x)
+      .attr('y', y)
+      .attr('width', width)
+      .attr('height', height);
+
+    if (mx + width > (innerWidth - margin.left)) {
+      offset = 0 - markerRadius - width;
+    } else {
+      offset = 16;
+    }
+
+    nameOverlayGroup.attr('transform', 'translate(' + (mx + offset) + ',' + (my + 5) + ')');
+  });
+
+  d3.selectAll('.marker-group').on('mouseout', function(d) {
+    hoverText.text('');
+    hoverTextBackground.attr('width', 0).attr('height', 0);
+  });
+</script>
+<script>
+  var rows = document.querySelectorAll('table tbody tr'),
+    colors = ['#fff26a', '#c9f1ab', '#ffbcce', '#bcd8ff'];
+  for (var i = 0; i < rows.length; i++) {
+    var n = 0;
+    for (var j = 0; j < rows[i].children.length; j++) {
+      var text = rows[i].children[j].textContent;
+      if (text.indexOf('%') > -1) {
+        var p = parseFloat(rows[i].children[j].textContent.replace(/[^\d\.]/g, '')) / 50;
+
+        if (isNaN(p) === false){
+          if (p === 0) {
+            rows[i].children[j].style.backgroundColor = '#FFF';
+          } else if (p === 1) {
+            rows[i].children[j].style.backgroundColor = colors[n];
+          } else {
+            rows[i].children[j].style.backgroundImage = 'linear-gradient(to right, ' + colors[n] + ' ' + Math.round(p * 100) + '%, #fff 0%)';
+          }
+
+          n++;
+        }
+      }
+    }
+  }
+</script>
+<link type="text/css" rel="stylesheet" href="https://hub.deloittedigital.com.au/wiki/download/attachments/256575768/graph.css?api=v2">
+
+</body>
+</html>
